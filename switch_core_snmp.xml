@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+  <version>7.4</version>
+  <template_groups>
+    <template_group>
+      <uuid>1527993f0b3746e79f4c98f5a69eb251</uuid>
+      <name>Templates/Network devices</name>
+    </template_group>
+  </template_groups>
+  <templates>
+    <template>
+      <uuid>b8cad9fa72a1447bb748d6b914bd67d1</uuid>
+      <template>Switch Core SNMP</template>
+      <name>Switch Core SNMP</name>
+      <description>Template for HP/Aruba core switches with stack support. Monitors ping, CPU, memory, temperature, fans, power supplies and interface traffic.</description>
+      <groups>
+        <group>
+          <name>Templates/Network devices</name>
+        </group>
+      </groups>
+
+      <macros>
+        <macro>
+          <macro>{$SNMP_COMMUNITY}</macro>
+          <value>public</value>
+        </macro>
+        <macro>
+          <macro>{$CPU_WARN}</macro>
+          <value>80</value>
+        </macro>
+        <macro>
+          <macro>{$CPU_CRIT}</macro>
+          <value>95</value>
+        </macro>
+        <macro>
+          <macro>{$MEM_WARN}</macro>
+          <value>85</value>
+        </macro>
+        <macro>
+          <macro>{$TEMP_WARN}</macro>
+          <value>50</value>
+        </macro>
+        <macro>
+          <macro>{$TEMP_CRIT}</macro>
+          <value>65</value>
+        </macro>
+        <macro>
+          <macro>{$FAN_MIN_RPM}</macro>
+          <value>1000</value>
+        </macro>
+      </macros>
+
+      <items>
+        <item>
+          <uuid>90c5d11846ba44639413befdbbabbf52</uuid>
+          <name>System - Description</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.2.1.1.1.0</snmp_oid>
+          <key>switch.sys.descr</key>
+          <delay>3600s</delay>
+          <value_type>CHAR</value_type>
+          <tags>
+            <tag><tag>component</tag><value>system</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>cb26e097400d4516a3531ba28738c234</uuid>
+          <name>System - Uptime</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.2.1.1.3.0</snmp_oid>
+          <key>switch.sys.uptime</key>
+          <delay>300s</delay>
+          <units>uptime</units>
+          <preprocessing>
+            <step>
+              <type>MULTIPLIER</type>
+              <parameters>
+                <parameter>0.01</parameter>
+              </parameters>
+            </step>
+          </preprocessing>
+          <tags>
+            <tag><tag>component</tag><value>system</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>d1d409b4817a4324ab6827e8250bba86</uuid>
+              <expression>last(/Switch Core SNMP/switch.sys.uptime)&lt;600</expression>
+              <name>Switch {HOST.NAME} has restarted</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>1d6de4c26a3544fca964cf57f34edccc</uuid>
+          <name>ICMP Ping - Availability</name>
+          <type>SIMPLE</type>
+          <key>icmpping</key>
+          <delay>60s</delay>
+          <valuemap>
+            <name>Ping Status</name>
+          </valuemap>
+          <tags>
+            <tag><tag>component</tag><value>availability</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>5fa44ba395604f77a4fd1b0884693221</uuid>
+              <expression>max(/Switch Core SNMP/icmpping,#3)=0</expression>
+              <name>Switch {HOST.NAME} is unreachable</name>
+              <priority>DISASTER</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>ca55c3969ff84883962462cbdabb153d</uuid>
+          <name>ICMP Ping - Response Time</name>
+          <type>SIMPLE</type>
+          <key>icmppingsec</key>
+          <delay>60s</delay>
+          <units>s</units>
+          <tags>
+            <tag><tag>component</tag><value>availability</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>29e0e1d7a7ee4bba9acf6befdb26f136</uuid>
+          <name>Memory - Total</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.2.1.25.2.3.1.5.1</snmp_oid>
+          <key>switch.mem.total</key>
+          <delay>3600s</delay>
+          <units>B</units>
+          <preprocessing>
+            <step>
+              <type>MULTIPLIER</type>
+              <parameters>
+                <parameter>1024</parameter>
+              </parameters>
+            </step>
+          </preprocessing>
+          <tags>
+            <tag><tag>component</tag><value>memory</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>71a43663a77546ddbdcfbc42d62370e0</uuid>
+          <name>Memory - Used</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.2.1.25.2.3.1.6.1</snmp_oid>
+          <key>switch.mem.used</key>
+          <delay>60s</delay>
+          <units>B</units>
+          <preprocessing>
+            <step>
+              <type>MULTIPLIER</type>
+              <parameters>
+                <parameter>1024</parameter>
+              </parameters>
+            </step>
+          </preprocessing>
+          <tags>
+            <tag><tag>component</tag><value>memory</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>93e44881870f4603a15ba63b2a0f0a22</uuid>
+          <name>Memory - Used %</name>
+          <type>CALCULATED</type>
+          <key>switch.mem.pused</key>
+          <delay>60s</delay>
+          <units>%</units>
+          <params>100*last(//switch.mem.used)/last(//switch.mem.total)</params>
+          <tags>
+            <tag><tag>component</tag><value>memory</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>9d2baaf9dcc440d995f5cf1fe93335d6</uuid>
+              <expression>avg(/Switch Core SNMP/switch.mem.pused,5m)>{$MEM_WARN}</expression>
+              <name>Memory usage above {$MEM_WARN}% on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+      </items>
+
+      <discovery_rules>
+
+        <!-- LLD: CPU -->
+        <discovery_rule>
+          <uuid>0e6199faa7b649dc81e7dc194046e920</uuid>
+          <name>CPU Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#CPU_INDEX},1.3.6.1.2.1.25.3.3.1.2]</snmp_oid>
+          <key>switch.cpu.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SNMPINDEX}</macro>
+                <value>^196</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>bbf480d264764fff8e31e86b060530c6</uuid>
+              <name>CPU [{#SNMPINDEX}]: Load</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.25.3.3.1.2.{#SNMPINDEX}</snmp_oid>
+              <key>switch.cpu.load[{#SNMPINDEX}]</key>
+              <delay>60s</delay>
+              <units>%</units>
+              <tags>
+                <tag><tag>component</tag><value>cpu</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>d2de1296c36e48fabd408c04b25c0448</uuid>
+              <expression>avg(/Switch Core SNMP/switch.cpu.load[{#SNMPINDEX}],5m)>{$CPU_WARN}</expression>
+              <name>CPU [{#SNMPINDEX}] above {$CPU_WARN}% on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>93d2716d03534f13bfd5e05fc6de5340</uuid>
+              <expression>avg(/Switch Core SNMP/switch.cpu.load[{#SNMPINDEX}],5m)>{$CPU_CRIT}</expression>
+              <name>CPU [{#SNMPINDEX}] CRITICAL above {$CPU_CRIT}% on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: TEMPERATURE -->
+        <discovery_rule>
+          <uuid>5d3db11788794211a17b83cb92d5d704</uuid>
+          <name>Temperature Sensor Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#SENSOR_UNIT},1.3.6.1.2.1.99.1.1.1.6]</snmp_oid>
+          <key>switch.temp.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SENSOR_UNIT}</macro>
+                <value>^C$</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>e62542cc78c848d28de0bd37f789ecc8</uuid>
+              <name>Temperature [{#SNMPINDEX}]</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.99.1.1.1.4.{#SNMPINDEX}</snmp_oid>
+              <key>switch.temp.value[{#SNMPINDEX}]</key>
+              <delay>120s</delay>
+              <units>°C</units>
+              <preprocessing>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>0.001</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag><tag>component</tag><value>temperature</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>5dfcbe6345764ea3bfe3056f822d2666</uuid>
+              <expression>last(/Switch Core SNMP/switch.temp.value[{#SNMPINDEX}])>{$TEMP_WARN}</expression>
+              <name>Temperature [{#SNMPINDEX}] above {$TEMP_WARN}C on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>d69b1b85ecec4cedaa9ed9827a55e58b</uuid>
+              <expression>last(/Switch Core SNMP/switch.temp.value[{#SNMPINDEX}])>{$TEMP_CRIT}</expression>
+              <name>Temperature [{#SNMPINDEX}] CRITICAL above {$TEMP_CRIT}C on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: FANS -->
+        <discovery_rule>
+          <uuid>c878662fff094d578fb20370f4fbd98b</uuid>
+          <name>Fan Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#SENSOR_UNIT},1.3.6.1.2.1.99.1.1.1.6]</snmp_oid>
+          <key>switch.fan.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SENSOR_UNIT}</macro>
+                <value>^RPM$</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>7336396882ab4fdeb5eb45c6a71a1434</uuid>
+              <name>Fan [{#SNMPINDEX}]: RPM</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.99.1.1.1.4.{#SNMPINDEX}</snmp_oid>
+              <key>switch.fan.rpm[{#SNMPINDEX}]</key>
+              <delay>120s</delay>
+              <units>RPM</units>
+              <tags>
+                <tag><tag>component</tag><value>fan</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>24792fcf25904813920afa36ba841eb2</uuid>
+              <expression>last(/Switch Core SNMP/switch.fan.rpm[{#SNMPINDEX}])&lt;{$FAN_MIN_RPM} and last(/Switch Core SNMP/switch.fan.rpm[{#SNMPINDEX}])&gt;0</expression>
+              <name>Fan [{#SNMPINDEX}] below {$FAN_MIN_RPM} RPM on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: PSU -->
+        <discovery_rule>
+          <uuid>24e27a39bb9f42ceb396fe79c208bb0b</uuid>
+          <name>PSU Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#PSU_INDEX},1.3.6.1.2.1.131.1.1.1.3]</snmp_oid>
+          <key>switch.psu.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SNMPINDEX}</macro>
+                <value>^[0-9]+15[0-9]+$</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>41d5057e6fa24065bbc12ac76966a7dc</uuid>
+              <name>PSU [{#SNMPINDEX}]: Status</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.131.1.1.1.3.{#SNMPINDEX}</snmp_oid>
+              <key>switch.psu.status[{#SNMPINDEX}]</key>
+              <delay>120s</delay>
+              <valuemap>
+                <name>Entity Oper Status</name>
+              </valuemap>
+              <tags>
+                <tag><tag>component</tag><value>psu</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>314f608869ed45599a5adae55f5d20e9</uuid>
+              <expression>last(/Switch Core SNMP/switch.psu.status[{#SNMPINDEX}])=2</expression>
+              <name>CRITICAL: Power supply [{#SNMPINDEX}] failed on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+              <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+              <recovery_expression>last(/Switch Core SNMP/switch.psu.status[{#SNMPINDEX}])=3</recovery_expression>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: INTERFACES - solo LAGs -->
+        <discovery_rule>
+          <uuid>b81a046cd2b14c8e95b1a713577f2a39</uuid>
+          <name>Network Interface Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#IFINDEX},1.3.6.1.2.1.2.2.1.1,{#IFNAME},1.3.6.1.2.1.31.1.1.1.1]</snmp_oid>
+          <key>switch.net.if.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#IFNAME}</macro>
+                <value>^lag</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>d62842806dfe434b8b42add5d825a4b9</uuid>
+              <name>Interface [{#IFNAME}]: Traffic In</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.31.1.1.1.6.{#IFINDEX}</snmp_oid>
+              <key>switch.if.in[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag><tag>component</tag><value>interface</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>2eac916ebe0244e4bbe56561bce129a7</uuid>
+              <name>Interface [{#IFNAME}]: Traffic Out</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.31.1.1.1.10.{#IFINDEX}</snmp_oid>
+              <key>switch.if.out[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag><tag>component</tag><value>interface</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>85738d2e10f348caa9ca8d7ef37692a7</uuid>
+              <name>Interface [{#IFNAME}]: Operational Status</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.2.2.1.8.{#IFINDEX}</snmp_oid>
+              <key>switch.if.operstatus[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <valuemap>
+                <name>Interface Operational Status</name>
+              </valuemap>
+              <tags>
+                <tag><tag>component</tag><value>interface</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>35dd2d222d0d47b0a378ffcb119037e3</uuid>
+              <expression>last(/Switch Core SNMP/switch.if.operstatus[{#IFINDEX}])=2 and last(/Switch Core SNMP/switch.if.operstatus[{#IFINDEX}],#1:now-5m)=1</expression>
+              <name>Interface [{#IFNAME}] is down on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+              <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+              <recovery_expression>last(/Switch Core SNMP/switch.if.operstatus[{#IFINDEX}])=1</recovery_expression>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+      </discovery_rules>
+
+      <valuemaps>
+        <valuemap>
+          <uuid>36b7a1a533a54f95ba519dfe52c74db8</uuid>
+          <name>Ping Status</name>
+          <mappings>
+            <mapping><value>0</value><newvalue>Unreachable</newvalue></mapping>
+            <mapping><value>1</value><newvalue>Reachable</newvalue></mapping>
+          </mappings>
+        </valuemap>
+        <valuemap>
+          <uuid>be4afc7cc66242518482d6ecf54bd053</uuid>
+          <name>Entity Oper Status</name>
+          <mappings>
+            <mapping><value>1</value><newvalue>Unknown</newvalue></mapping>
+            <mapping><value>2</value><newvalue>Disabled</newvalue></mapping>
+            <mapping><value>3</value><newvalue>Enabled</newvalue></mapping>
+            <mapping><value>4</value><newvalue>Testing</newvalue></mapping>
+          </mappings>
+        </valuemap>
+        <valuemap>
+          <uuid>cfef926445024e328887d99cfd7008a5</uuid>
+          <name>Interface Operational Status</name>
+          <mappings>
+            <mapping><value>1</value><newvalue>Up</newvalue></mapping>
+            <mapping><value>2</value><newvalue>Down</newvalue></mapping>
+            <mapping><value>3</value><newvalue>Testing</newvalue></mapping>
+          </mappings>
+        </valuemap>
+      </valuemaps>
+
+    </template>
+  </templates>
+</zabbix_export>
